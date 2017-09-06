@@ -3,6 +3,7 @@ package com.mahhaus.previsao.app
 import android.content.Context
 import android.os.AsyncTask
 import android.os.Bundle
+import android.os.Environment
 import android.util.Log
 import android.widget.Button
 import android.widget.EditText
@@ -13,6 +14,9 @@ import com.mahhaus.previsao.domain.City
 import com.mahhaus.previsao.domain.MhActivity
 import io.realm.Realm
 import java.io.*
+import android.os.Environment.getExternalStorageDirectory
+
+
 
 /**
  * Created by josias on 04/09/17 - 13:53.
@@ -64,14 +68,15 @@ class Calcular : MhActivity() {
         mRealm?.close()
     }
 
-    inner class objectFromFile : AsyncTask<Context, Void, Void>() {
+    inner class objectFromFile : AsyncTask<Context, Void, String>() {
 
         override fun onPreExecute() {
             super.onPreExecute()
         }
 
-        override fun doInBackground(vararg p0: Context?) : Void? {
+        override fun doInBackground(vararg p0: Context?) : String? {
             var filename = "city.json"
+            var brJson : String? = ""
             try {
                 val manager = p0[0]?.assets
 
@@ -105,17 +110,19 @@ class Calcular : MhActivity() {
                             var gson = Gson()
                             try {
                                 if (strObj.contains("\"BR\"")){
-                                    mListCities.add(gson.fromJson("{" + strObj + "}}", City::class.java))
+                                    brJson += "{$strObj}},"
+                                    mListCities.add(gson.fromJson("{$strObj}}", City::class.java))
                                 }
                             } catch (e: Exception){
-                                Log.i(TAG,  "{" + strObj + "}}")
+                                Log.i(TAG, "{$strObj}}")
                                 e.printStackTrace()
                             }
                         }
 
 
-                        if (mListCities.size >= 5561) {
+                        if (mListCities.size >= 3621) {
                             receiveString = null
+                            brJson = "{$brJson}"
                         } else {
                             receiveString = bufferedReader.readLine()
                         }
@@ -129,27 +136,32 @@ class Calcular : MhActivity() {
             } catch (e: IOException) {
                 Log.e("activity", "Can not read file: " + e.toString())
             }
-            return null
+            return brJson
         }
 
-        override fun onPostExecute(result: Void?) {
+        override fun onPostExecute(result: String?) {
             super.onPostExecute(result)
 
-            var listBr: ArrayList<City> = arrayListOf()
-            mListCities.forEach { city: City ->
-                listBr.add(city)
-                mRealm?.executeTransaction { realm -> realm.copyToRealm(city) }
+//            var listBr: ArrayList<City> = arrayListOf()
+//            mListCities.forEach { city: City ->
+//                listBr.add(city)
+//            }
+            if (result != null) {
+                writeToFile(result)
             }
 
-            var gson = Gson()
-            var CityBr = gson.toJson(listBr)
-            writeToFile(CityBr)
+//            mRealm = Realm.getDefaultInstance()
+//            mRealm?.executeTransaction { realm -> realm.copyToRealmOrUpdate(mListCities) }
+
+//            var gson = Gson()
+//            var CityBr = gson.toJson(mListCities)
         }
     }
 
     private fun writeToFile(data: String) {
         try {
-            val outputStreamWriter = OutputStreamWriter(openFileOutput("br_city.txt", Context.MODE_PRIVATE))
+            val extFile = File(Environment.getExternalStorageDirectory(), "/android/data/br_city.json")
+            val outputStreamWriter = OutputStreamWriter(FileOutputStream(extFile))
             outputStreamWriter.write(data)
             outputStreamWriter.close()
         } catch (e: IOException) {
