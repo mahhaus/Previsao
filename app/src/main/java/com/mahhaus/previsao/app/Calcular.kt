@@ -86,18 +86,8 @@ class Calcular : MhActivity() {
                     val inputStreamReader = InputStreamReader(inputStream)
                     val bufferedReader = BufferedReader(inputStreamReader)
                     var stringBuilder = StringBuilder()
-
-//                {
-//                    "id": 519188,
-//                    "name": "Novinki",
-//                    "country": "RU",
-//                    "coord": {
-//                        "lon": 37.666668,
-//                        "lat": 55.683334
-//                    }
-//                },
-
                     var receiveString = bufferedReader.readLine()
+
                     while (receiveString != null) {
                         stringBuilder.append(receiveString.trim())
 
